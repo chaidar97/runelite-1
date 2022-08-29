@@ -229,22 +229,22 @@ public class RuneLite
 				ClassPreloader.preload();
 			}, "Preloader").start();
 
-			final boolean developerMode = options.has("developer-mode") && RuneLiteProperties.getLauncherVersion() == null;
+			final boolean developerMode = true;//options.has("developer-mode") && RuneLiteProperties.getLauncherVersion() == null;
 
-			if (developerMode)
-			{
-				boolean assertions = false;
-				assert assertions = true;
-				if (!assertions)
-				{
-					SwingUtilities.invokeLater(() ->
-						new FatalErrorDialog("Developers should enable assertions; Add `-ea` to your JVM arguments`")
-							.addHelpButtons()
-							.addBuildingGuide()
-							.open());
-					return;
-				}
-			}
+//			if (developerMode)
+//			{
+//				boolean assertions = false;
+//				assert assertions = true;
+//				if (!assertions)
+//				{
+//					SwingUtilities.invokeLater(() ->
+//						new FatalErrorDialog("Developers should enable assertions; Add `-ea` to your JVM arguments`")
+//							.addHelpButtons()
+//							.addBuildingGuide()
+//							.open());
+//					return;
+//				}
+//			}
 
 			PROFILES_DIR.mkdirs();
 

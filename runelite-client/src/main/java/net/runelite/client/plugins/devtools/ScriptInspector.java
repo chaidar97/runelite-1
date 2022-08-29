@@ -31,10 +31,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
+import java.awt.image.BufferedImage;
+import java.util.*;
 import javax.inject.Inject;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -56,15 +54,22 @@ import javax.swing.tree.TreePath;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
-import net.runelite.api.events.ScriptPostFired;
-import net.runelite.api.events.ScriptPreFired;
+import net.runelite.api.InventoryID;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.events.*;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
+
+import static net.runelite.api.ItemID.ANIMALS_BONES;
 import static net.runelite.api.widgets.WidgetInfo.TO_CHILD;
 import static net.runelite.api.widgets.WidgetInfo.TO_GROUP;
+
+import net.runelite.api.widgets.WidgetModalMode;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.plugins.mta.graveyard.GraveyardCounter;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.FontManager;
@@ -272,12 +277,64 @@ public class ScriptInspector extends DevToolsFrame
 	}
 
 	@Subscribe
+	private void onWidgetClosed(WidgetClosed ev)
+	{
+		if (ev.getGroupId() == 773)
+			found = false;
+	}
+
+	@Subscribe
+	public void onItemContainerChanged(ItemContainerChanged event)
+	{
+		System.out.println("Container changed: " + event.getContainerId() + " " + Arrays.toString(event.getItemContainer().getItems()));
+		String string = "new Item[]{";
+		for (Item i : event.getItemContainer().getItems()) {
+			string += "new Item(" + i.getId() + ", " + i.getQuantity() +"),";
+		}
+		string += "};";
+		System.out.println(string);
+	}
+
+	@Subscribe
+	public void onVarbitChanged(VarbitChanged event)
+	{
+		System.out.println("Varbit changed: " + event.getVarbitId() + " varp: " + event.getVarpId() + " varbit value: " + event.getValue());
+	}
+
+	@Subscribe
+	public void onWidgetLoaded(WidgetLoaded widgetLoaded)
+	{
+		if (/*widgetLoaded.getGroupId() == 674 ||*/ widgetLoaded.getGroupId() == 773)
+			found = true;
+		System.out.println("WIDGET LOADED: " + widgetLoaded.getGroupId());
+	}
+
+	static boolean found = false;
+	@Subscribe
 	public void onScriptPreFired(ScriptPreFired event)
 	{
 		ScriptTreeNode newNode = new ScriptTreeNode(event.getScriptId());
 		if (event.getScriptEvent() != null)
 		{
 			newNode.setSource(event.getScriptEvent().getSource());
+		}
+
+		boolean isInter = false;
+		if (event.getScriptEvent() != null && event.getScriptEvent().getArguments() != null) {
+			for (Object obj : event.getScriptEvent().getArguments()) {
+				try {
+					final int inter = (int)obj;
+					if (/*inter >> 16 == 674 ||*/ inter >> 16 == 773)
+						isInter = true;
+				} catch (Exception e) {
+
+				}
+			}
+		}
+		if ((event.getScriptEvent() != null && event.getScriptEvent().getSource() != null
+				&& (/*WidgetInfo.TO_GROUP(event.getScriptEvent().getSource().getId()) == 674||*/ WidgetInfo.TO_GROUP(event.getScriptEvent().getSource().getId()) == 773) || isInter)) {
+			if (event.getScriptId() != 1576 && event.getScriptId() != 6596 && event.getScriptId() != 1015&& event.getScriptId() != 4730)
+				System.out.println("ARGS: " + Arrays.toString(event.getScriptEvent().getArguments()));
 		}
 
 		if (currentNode == null)
